@@ -18,6 +18,12 @@ Solange alle Schüler in den Einstellungen dieselben Werte verwenden, erhalten a
 * Tastaturkürzel
 * Tippen auf dem Ziffernblock
 
+### Pseudo-Zufall
+
+Der Reihenfolge und der Inhalt der Module werden zufällig generiert. Doch bei jedem Durchgang wird derselbe Startwert für den Zufallsgenerator benutzt, so dass immer dieselben Module/Inhalte generiert werden und man seine Bestzeit verbessern kann.
+
+Wenn man andere Module/Inhalte generieren möchte, muss man den Startwert des Zufallsgenerators in den Einstellungen (Zahnrad-Symbol) ändern. Einfach eine beliebige Zahl zwischen 1 und 99999 verwenden.
+
 ### Hintergrund
 
 Klassische Software zum Üben des 10-Finger-Systems gibt es genug. Doch Schüler in der Unterstufe können oft auch nicht richtig mit der Maus umgehen. Bei Doppelklicks verkrampfen sie, beim Rechtsklick bricht ihnen fast der Finger ab. Daher wurde dieser Trainer ursprünglich als Maus-Trainer entwickelt.

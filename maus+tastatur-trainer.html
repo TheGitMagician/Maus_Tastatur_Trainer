@@ -1,0 +1,1783 @@
+<!-- Maus+Tastatur-Trainer © 2025 by Stefan Lohner
+ is licensed under CC BY-NC-SA 4.0.
+ To view a copy of this license,
+ visit https://creativecommons.org/licenses/by-nc-sa/4.0/ -->
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Maus+Tastatur-Trainer</title>
+		<style>
+			/* --- Color Variables --- */
+			:root {
+				--color-bodyTop: #ffe271;
+				--color-bodyBottom: #ffb42a;
+				--color-gameArea: #ffb42a;
+				--color-progressInactive: #ae4871;
+				--color-progessActive: #ff7f86;
+				--color-accent1: #6ebed3;
+				--color-accent2: #54ff3a;
+				--color-accent3: #ffb7a9;
+				--color-accent4: #fff4a4;
+				--color-button: #ff7f86;
+				--color-font: #542035;
+				--color-default: #000000;
+			}
+
+			/* --- General Page Layout --- */
+			* {
+				user-select: none;
+			}
+
+			html,
+			body {
+				margin: 0;
+				height: 100%;
+				background: linear-gradient(
+					var(--color-bodyTop),
+					var(--color-bodyBottom)
+				);
+				display: flex;
+				flex-direction: column;
+				font-family: Arial, Helvetica, sans-serif;
+				overflow-x: hidden;
+				color: var(--color-font);
+			}
+
+			button,
+			input[type="button"],
+			input[type="submit"] {
+				background-color: var(--color-button);
+				border: 1px solid black;
+				border-radius: 3px;
+				box-shadow: 0 4px 4px rgba(0, 0, 0, 0.4);
+			}
+
+			input[type="checkbox"]{
+				accent-color: var(--color-button);
+			}
+
+			input[type="number"] {
+				background-color: #ffffcc;
+				border: 1px solid rgba(0, 0, 0, 0.7);
+				border-radius: 4px;
+			}
+
+			#header {
+				width: 100%;
+				text-align: center;
+				padding: 10px;
+				flex-shrink: 0;
+			}
+
+			#footer {
+				width: 100%;
+				color: rgba(0, 0, 0, 0.4);
+				font-size: 12px;
+				text-align: center;
+				padding: 10px;
+				flex-shrink: 0;
+			}
+
+			#middle {
+				flex: 1;
+				position: relative;
+			}
+
+			#gameContainer {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				width: 600px;
+				height: 400px;
+			}
+
+			#gameArea {
+				width: 600px;
+				height: 400px;
+				background: var(--color-gameArea);
+				border: 1px solid rgba(0, 0, 0, 0.5);
+				border-radius: 12px;
+				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+				position: relative;
+				z-index: 1;
+				overflow: hidden;
+			}
+
+			#topArea {
+				position: absolute;
+				bottom: 100%;
+				padding-bottom: 30px;
+				width: 100%;
+				text-align: center;
+				font-size: 20px;
+				font-weight: bold;
+			}
+
+			#bottomArea {
+				position: absolute;
+				top: 100%;
+				width: 900px;
+				transform: translate(-150px);
+				text-align: center;
+			}
+
+			/* --- Progress Bar --- */
+			#progressBar {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				align-items: center;
+				margin-top: 60px;
+				gap: 0;
+				max-width: 100%;
+			}
+
+			.progressRow {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex: 0 0 100%;
+				margin-bottom: 16px;
+			}
+
+			.progressCircle {
+				width: 25px;
+				height: 25px;
+				border: 1px solid rgba(0, 0, 0, 0.5);
+				border-radius: 50%;
+				background-color: var(--color-progressInactive);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 14px;
+				font-family: sans-serif;
+				color: black;
+				transition: background-color 0.4s ease;
+				box-shadow: 0 4px 4px rgba(0, 0, 0, 0.4);
+			}
+
+			.progressCircle.completed {
+				background-color: var(--color-progessActive);
+			}
+
+			.progressLine {
+				flex: 0 0 auto;
+				width: 40px;
+				height: 4px;
+				background-color: var(--color-progressInactive);
+				margin: 0 5px;
+				border: 1px solid rgba(0, 0, 0, 0.1);
+				border-radius: 2px;
+				position: relative;
+				overflow: hidden;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+			}
+
+			.progressLine::after {
+				content: "";
+				position: absolute;
+				top: 0;
+				left: 0;
+				height: 100%;
+				width: 0%;
+				background-color: var(--color-progessActive);
+				transition: width 0.6s ease;
+			}
+
+			.progressLine.completed::after {
+				width: 100%;
+			}
+
+			/* --- Overlay used for Menus that Cover the gameArea */
+			#gameAreaOverlay {
+				position: absolute;
+				inset: 0;
+				background: var(--color-gameArea);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 12px;
+				text-align: center;
+				z-index: 1001;
+			}
+
+			/* --- Settings Icon and Menu --- */
+			#settingsIcon {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				font-size: 24px;
+				cursor: pointer;
+				user-select: none;
+				z-index: 10;
+			}
+
+			#settingsPanel {
+				background: var(--color-gameArea);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 12px;
+				text-align: center;
+				min-width: 350px;
+				outline: none;
+			}
+
+			/* --- Color Palette Icon and Menu --- */
+			#paletteIcon {
+				position: absolute;
+				top: 11px;
+				left: 11px;
+				width: 24px;
+				height: 24px;
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				grid-auto-rows: 8px;
+				background: #000;
+				border: 1px solid rgba(0, 0, 0, 0.2);
+				border-radius: 50%;
+				cursor: pointer;
+				overflow: hidden;
+				z-index: 10;
+			}
+
+			input[type="color"] {
+				border: none;
+				padding: 0;
+				background: none;
+				width: 40px;
+				height: 24px;
+				cursor: pointer;
+			}
+
+			#palettePanel {
+				display: flex;
+				flex-direction: column;
+				gap: 20px;
+				width: 90%;
+				overflow: hidden;
+				padding: 5px;
+				box-sizing: border-box;
+				outline: none;
+			}
+
+			#palettePanel .actions {
+				display: flex;
+				gap: 12px;
+				justify-content: center;
+			}
+
+			#palettePanel .paletteGrid {
+				display: grid;
+				grid-template-rows: repeat(6, 1fr);
+				gap: 2px;
+				overflow-y: auto;
+				grid-auto-flow: column;
+				text-align: left;
+			}
+
+			.paletteRow {
+				width: 100%;
+				box-sizing: border-box;
+				display: grid;
+				grid-template-columns: 1fr auto;
+				align-items: center;
+				gap: 10px;
+				padding: 2px 20px 2px;
+				border-radius: 8px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="header"></div>
+
+		<div id="middle">
+			<div id="gameContainer">
+				<div id="topArea"></div>
+				<div id="gameArea"></div>
+				<div id="bottomArea">
+					<div id="progressBar"></div>
+				</div>
+			</div>
+		</div>
+
+		<div id="footer">Der "Lohner-Trainer" v1.0</div>
+
+		<script>
+			// ========== Game Variables ==================================
+			const modules = [
+				{ script: dragAndDropModule, 		name: "Ziehen und ablegen" },
+				{ script: rightClickModule, 		name: "Rechtsklick" },
+				{ script: doubleClickModule, 		name: "Doppelklick" },
+				{ script: numpadModule, 				name: "Ziffernblock" },
+				{ script: keyComboModule, 			name: "Tastenkombinationen" },
+				{ script: rightClickMenuModule,	name: "Kontextmenü" },
+				{ script: chaseCircleModule,		name: "Fang den Kreis" },
+			];
+
+			const palette_vars = [
+				{ name: "--color-bodyTop", 					label: "Hintergrund oben" },
+				{ name: "--color-bodyBottom", 			label: "Hintergrund unten" },
+				{ name: "--color-gameArea", 				label: "Spielfläche" },
+				{ name: "--color-progressInactive", label: "Fortschritt inaktiv" },
+				{ name: "--color-progessActive", 		label: "Fortschritt aktiv" },
+				{ name: "--color-accent1", 					label: "Akzentfarbe 1" },
+				{ name: "--color-accent2", 					label: "Akzentfarbe 2" },
+				{ name: "--color-accent3", 					label: "Akzentfarbe 3" },
+				{ name: "--color-accent4", 					label: "Akzentfarbe 4" },
+				{ name: "--color-button", 					label: "Knöpfe" },
+				{ name: "--color-font", 						label: "Schriftfarbe" },
+				{ name: "--color-default",					label: "Aktuell ungenutzt" },
+			];
+			
+			const palettes = {
+				sunset: {
+					name: "Sunset",
+					edited: false,
+					vars: {
+						"--color-bodyTop": "#ffe271",
+						"--color-bodyBottom": "#ffb42a",
+						"--color-gameArea": "#ffb42a",
+						"--color-progressInactive": "#ae4871",
+						"--color-progessActive": "#ff7f86",
+						"--color-accent1": "#6ebed3",
+						"--color-accent2": "#54ff3a",
+						"--color-accent3": "#ffb7a9",
+						"--color-accent4": "#fff4a4",
+						"--color-button": "#ff7f86",
+						"--color-font": "#542035",
+						"--color-black": "#000",
+					},
+				},
+				aqua: {
+					name: "Aqua",
+					edited: false,
+					vars: {
+						"--color-bodyTop": "#c6f1ff",
+						"--color-bodyBottom": "#6ed1ff",
+						"--color-gameArea": "#a7e0ff",
+						"--color-progressInactive": "#2b6f85",
+						"--color-progessActive": "#00c3e6",
+						"--color-accent1": "#1fd3ff",
+						"--color-accent2": "#00e3b3",
+						"--color-accent3": "#9ef6ff",
+						"--color-accent4": "#e4fbff",
+						"--color-button": "#00b5d6",
+						"--color-font": "#123645",
+						"--color-black": "#000",
+					},
+				},
+				forest: {
+					name: "Forest",
+					edited: false,
+					vars: {
+						"--color-bodyTop": "#dff3e1",
+						"--color-bodyBottom": "#9fd4a2",
+						"--color-gameArea": "#bde2c1",
+						"--color-progressInactive": "#3d5b40",
+						"--color-progessActive": "#5fbf6b",
+						"--color-accent1": "#75d699",
+						"--color-accent2": "#bf685f",
+						"--color-accent3": "#d0f0d8",
+						"--color-accent4": "#eef9f0",
+						"--color-button": "#5fbf6b",
+						"--color-font": "#203226",
+						"--color-black": "#000",
+					},
+				},
+				candy: {
+					name: "Candy",
+					edited: false,
+					vars: {
+						"--color-bodyTop": "#ffe6f3",
+						"--color-bodyBottom": "#ffabd6",
+						"--color-gameArea": "#ffc5e4",
+						"--color-progressInactive": "#8a4a6f",
+						"--color-progessActive": "#ff7fb0",
+						"--color-accent1": "#ca66fa",
+						"--color-accent2": "#ffe066",
+						"--color-accent3": "#ff9933",
+						"--color-accent4": "#ff8080",
+						"--color-button": "#caff6a",
+						"--color-font": "#4b2440",
+						"--color-black": "#000",
+					},
+				},
+				sepia: {
+					name: "Oldschool",
+					edited: false,
+					vars: {
+						"--color-bodyTop": "#f4ecd8",
+						"--color-bodyBottom": "#e0cda9",
+						"--color-gameArea": "#d9c3a3",
+						"--color-progressInactive": "#7b6a58",
+						"--color-progessActive": "#b5a697",
+						"--color-accent1": "#a67c52",
+						"--color-accent2": "#d9815b",
+						"--color-accent3": "#e6d2a5",
+						"--color-accent4": "#f9f4e5",
+						"--color-button": "#b08a5c",
+						"--color-font": "#3e2f1c",
+						"--color-black": "#000",
+					},
+				},
+				hacker: {
+					name: "Hacker",
+					edited: false,
+					vars: {
+						"--color-bodyTop": "#000",
+						"--color-bodyBottom": "#000",
+						"--color-gameArea": "#000",
+						"--color-progressInactive": "#000",
+						"--color-progessActive": "#2cff05",
+						"--color-accent1": "#2cff05",
+						"--color-accent2": "#2cff05",
+						"--color-accent3": "#2cff05",
+						"--color-accent4": "#2cff05",
+						"--color-button": "#2cff05",
+						"--color-font": "#2cff05",
+						"--color-black": "#000",
+					},
+				},
+			};
+
+			let totalRounds = 5;
+			let randomSeedForThisGame = 246;
+			let currentRound = 0;
+			let startTime;
+			let selectedModuleScripts = modules.map((m) => m.script);
+			let lastModuleIndex = -1;
+			let seed = 0;
+			let activePaletteId = "sunset";
+
+
+			// ========== Helper Functions ==================================
+			// --- Custom Repeatable Randomness ----------------
+			function setSeed(s) {
+				seed = s >>> 0;
+			}
+
+			function random() {
+				// repeatable pseudo-random numbers via LCG parameters
+				// from the book "Numerical Recipes"
+				seed = (seed * 1664525 + 1013904223) >>> 0;
+				return seed / 0xffffffff;
+			}
+
+
+			// --- Custom Particle Effect ----------------
+			function spawnParticles(x, y) {
+				const gameArea = document.getElementById("gameArea");
+
+				for (let i = 0; i < 20; i++) {
+					const particle = document.createElement("div");
+					particle.style.position = "absolute";
+					particle.style.left = x + "px";
+					particle.style.top = y + "px";
+					particle.style.width = "8px";
+					particle.style.height = "8px";
+					particle.style.background = `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`;
+					particle.style.borderRadius = "50%";
+					particle.style.pointerEvents = "none";
+					particle.style.zIndex = "1000";
+					particle.style.pointerEvents = "none";
+					gameArea.appendChild(particle);
+
+					const angle = Math.random() * 2 * Math.PI;
+					const speed = 2 + Math.random() * 4;
+					const vx = Math.cos(angle) * speed;
+					const vy = Math.sin(angle) * speed;
+
+					let opacity = 1;
+					let life = 0;
+					function animate() {
+						life++;
+						const dx = vx * life * 0.5;
+						const dy = vy * life * 0.5 + 0.2 * life * life * 0.2; // gravity
+						particle.style.transform = `translate(${dx}px, ${dy}px)`;
+						opacity -= 0.01;
+						particle.style.opacity = opacity;
+
+						if (opacity > 0) {
+							requestAnimationFrame(animate);
+						} else {
+							particle.remove();
+						}
+					}
+					requestAnimationFrame(animate);
+				}
+			}
+
+
+			// --- Settings Menu ----------------
+			function initSettingsIcon() {
+				const gameArea = document.getElementById("gameArea");
+
+				// remove existing icon if any
+				const old = document.getElementById("settingsIcon");
+				if (old) old.remove();
+
+				// create settings icon
+				const icon = document.createElement("div");
+				icon.id = "settingsIcon";
+
+				icon.textContent = "⚙️";
+
+				icon.addEventListener("click", openSettingsMenu);
+
+				gameArea.appendChild(icon);				
+			}
+
+			function openSettingsMenu() {
+				const gameArea = document.getElementById("gameArea");
+				if (document.getElementById("gameAreaOverlay")) return;
+
+				// create the overlay over the gameArea which holds the settings panel
+				const overlay = document.createElement("div");
+				overlay.id = "gameAreaOverlay";
+
+				// construct settings panel
+				const panel = document.createElement("div");
+				panel.id = "settingsPanel";
+
+				panel.innerHTML = `
+					<div style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
+						<label for="roundsInput"><strong>Anzahl der Module:</strong></label>
+						<input type="number" id="roundsInput" min="1" max="30" value="${totalRounds}" style="border-radius: 4px; outline: none; margin-bottom: 1px;">
+					</div>
+
+					<div style="margin-top: 20px">
+					<label for="modulesGrid"><strong>Modul-Auswahl</strong></label>
+					<div id="modulesGrid" style="text-align:left; margin-top: 10px; display: grid; grid-template-columns: auto auto;  column-gap: 30px; row-gap: 5px; overflow-y: auto; "></div>
+					</div>
+
+					<div style="display: flex; flex-direction: row; align-items: center; gap: 10px; margin-top: 20px">
+						<label for="seedInput"><strong>Startwert für den Zufallsgenerator:</strong></label>
+						<input type="number" id="seedInput" min="1" max="99999" value="${randomSeedForThisGame}" style="margin-bottom: 1px;">
+					</div>
+					
+					<div style="display:flex; justify-content:center; gap:12px; margin-top:22px;">
+						<button id="applySettings" style="padding: 5px 10px; font-size: 16px;">Anwenden</button>
+						<button id="cancelSettings" style="padding: 5px 10px; font-size: 16px;">Abbrechen</button>
+					</div>
+
+					<div id="hintText" style="font-size: 14px; margin-top: 5px;">Hinweis: Wenn du "Anwenden" wählst,<br>wird deine aktuelle Bestzeit zurückgesetzt.</div>
+				`;
+
+			// 	#settingsPanel .settingsGrid {
+			// 	display: grid;
+			// 	grid-template-columns: auto auto;
+			// 	gap: 2px;
+			// 	overflow-y: auto;
+			// 	grid-auto-flow: column;
+			// 	text-align: left;
+			// }
+
+				overlay.appendChild(panel);
+				gameArea.appendChild(overlay);
+
+				// populate module checkboxes
+				const modulesGrid = panel.querySelector("#modulesGrid");
+				modules.forEach((mod, i) => {
+					const wrapper = document.createElement("div");
+					wrapper.innerHTML = `
+							<label>
+								<input type="checkbox" id="mod${i}" ${selectedModuleScripts.includes(mod.script) ? "checked" : ""}>
+								${mod.name}
+							</label>`;
+					modulesGrid.appendChild(wrapper);
+				});
+
+				function closeOverlay() {
+					overlay.remove();
+				}
+
+				// listener: apply button
+				panel.querySelector("#applySettings").addEventListener("click", () => {
+					// update values from input fields
+					let rounds = parseInt(panel.querySelector("#roundsInput").value, 10) || 1;
+					if (rounds > 30) rounds = 30;
+					if (rounds < 1 || isNaN(rounds)) rounds = 1;
+					totalRounds = rounds;
+					randomSeedForThisGame = parseInt(panel.querySelector("#seedInput").value, 10) || 12345;
+
+					// update selected modules
+					const enabledModuleScripts = [];
+					modules.forEach((mod, i) => {
+						if (panel.querySelector("#mod" + i).checked)
+							enabledModuleScripts.push(mod.script);
+					});
+					selectedModuleScripts = enabledModuleScripts;
+
+					// reset highscore
+					sessionStorage.removeItem("bestTime");
+
+					// if the highscoreScreen is shown than empty any result text
+					// because the old result is no longer valid with the new settings
+					const resultTextDiv = document.getElementById("resultText");
+					if (resultTextDiv) {
+						resultTextDiv.textContent = "";
+					}
+
+					closeOverlay();
+				});
+
+				// listener: cancel button
+				panel.querySelector("#cancelSettings").addEventListener("click", () => {
+					closeOverlay();
+				});
+
+				// listener: ESC to close
+				overlay.addEventListener("keydown", (e) => {
+					if (e.key === "Escape") closeOverlay();
+				});
+
+				panel.tabIndex = -1;
+				panel.focus();
+			}
+
+
+			// --- Palette Menu ----------------
+			function initPaletteIcon() {
+				const gameArea = document.getElementById("gameArea");
+				
+				// remove existing icon if any
+				const old = document.getElementById("paletteIcon");
+				if (old) old.remove();
+
+				// create palette icon
+				const icon = document.createElement("div");
+				icon.id = "paletteIcon";
+
+				// create 12 color swatches (3 rows × 4 columns)
+				palette_vars.forEach((v) => {
+					const sw = document.createElement("div");
+					sw.className = "swatch";
+					sw.style.background = `var(${v.name})`;
+					icon.appendChild(sw);
+				});
+
+				icon.addEventListener("click", openPaletteEditor);
+
+				gameArea.appendChild(icon);
+			}
+
+			function openPaletteEditor() {
+				const gameArea = document.getElementById("gameArea");
+				if (document.getElementById("gameAreaOverlay")) return;
+
+				// create the overlay over the gameArea which holds the settings panel
+				const overlay = document.createElement("div");
+				overlay.id = "gameAreaOverlay";
+
+				// construct the settings panel
+				const panel = document.createElement("div");
+				panel.id = "palettePanel";
+
+				// -- title
+				const title = document.createElement("div");
+				title.textContent = "Farben";
+				title.style.fontWeight = "700";
+				title.style.fontSize = "18px";
+				title.style.textAlign = "center";
+				panel.appendChild(title);
+
+				// -- palette dropdown
+				const dropdownWrap = document.createElement("div");
+				dropdownWrap.style.display = "flex";
+				dropdownWrap.style.gap = "8px";
+				dropdownWrap.style.alignItems = "center";
+				dropdownWrap.style.justifyContent = "center";
+
+				const ddLabel = document.createElement("label");
+				ddLabel.textContent = "Farbpalette auswählen";
+				ddLabel.style.fontWeight = "600";
+
+				const paletteSelect = document.createElement("select");
+				paletteSelect.id = "paletteSelect";
+				paletteSelect.style.padding = "6px 10px";
+				paletteSelect.style.borderRadius = "6px";
+
+				Object.entries(palettes).forEach(([id, pal]) => {
+					const opt = document.createElement("option");
+					opt.value = id;
+					opt.textContent = pal.edited ? `${pal.name} (bearbeitet)` : pal.name;
+					paletteSelect.appendChild(opt);
+				});
+
+				dropdownWrap.appendChild(ddLabel);
+				dropdownWrap.appendChild(paletteSelect);
+				panel.appendChild(dropdownWrap);
+
+				// -- grid for color inputs
+				const grid = document.createElement("div");
+				grid.className = "paletteGrid";
+				panel.appendChild(grid);
+
+				const inputs = [];
+				palette_vars.forEach((v) => {
+					const row = document.createElement("div");
+					row.className = "paletteRow";
+
+					const label = document.createElement("div");
+					label.textContent = v.label;
+					label.style.userSelect = "none";
+
+					const input = document.createElement("input");
+					input.type = "color";
+
+					row.appendChild(label);
+					row.appendChild(input);
+					grid.appendChild(row);
+
+					inputs.push({ v, input });
+				});
+
+				const inputsByVar = {};
+				inputs.forEach(({ v, input }) => {
+					inputsByVar[v.name] = input;
+				});
+
+				// -- buttons
+				const actions = document.createElement("div");
+				actions.className = "actions";
+
+				const applyBtn = document.createElement("button");
+				applyBtn.textContent = "Anwenden";
+				applyBtn.style.padding = "5px 10px";
+				applyBtn.style.fontSize = "16px";
+
+				const cancelBtn = document.createElement("button");
+				cancelBtn.textContent = "Abbrechen";
+				cancelBtn.style.padding = "5px 10px";
+				cancelBtn.style.fontSize = "16px";
+
+				actions.appendChild(applyBtn);
+				actions.appendChild(cancelBtn);
+
+				panel.appendChild(actions);
+				overlay.appendChild(panel);
+				gameArea.appendChild(overlay);
+
+				// create local copy of palette that is being edited
+				let localPalette = {
+					name: palettes[activePaletteId].name,
+					edited: palettes[activePaletteId].edited,
+					vars: { ...palettes[activePaletteId].vars },
+				};
+
+				// load the currently active palette
+				paletteSelect.value = activePaletteId;
+				loadPaletteIntoInputs();
+
+				// helper: load values from palette into inputs
+				function loadPaletteIntoInputs() {
+					Object.entries(localPalette.vars).forEach(([varName, value]) => {
+						if (inputsByVar[varName]) {
+							inputsByVar[varName].value = toHexOrDefault(value, "#000000");
+						}
+					});
+				}
+
+				// listener: update localPalette when selecting a different palette from the dropdown
+				paletteSelect.addEventListener("change", (e) => {
+					const id = e.target.value;
+					activePaletteId = id; // track selection
+					localPalette = {
+						name: palettes[id].name,
+						edited: palettes[id].edited,
+						vars: { ...palettes[id].vars },
+					};
+					loadPaletteIntoInputs();
+
+					// update live preview
+					Object.entries(localPalette.vars).forEach(([k, v]) =>
+						setCssVar(k, v)
+					);
+				});
+
+				// listener: when user edits an individual color only update localPalette
+				inputs.forEach(({ v, input }) => {
+					input.addEventListener("change", () => {
+						localPalette.vars[v.name] = input.value;
+						// update live preview
+						setCssVar(v.name, input.value);
+					});
+				});
+				
+				// helper: close the palette menu and load the css variables from the currently active global palette
+				function closeOverlay() {
+					Object.entries(palettes[activePaletteId].vars).forEach(([k, v]) =>
+						setCssVar(k, v)
+					);
+					overlay.remove();
+				}
+
+				//listener: apply button
+				applyBtn.addEventListener("click", () => {
+					const pal = palettes[activePaletteId];
+
+					// compare localPalette with current global palette
+					let changed = false;
+					for (const [k, v] of Object.entries(localPalette.vars)) {
+						if (pal.vars[k]?.toLowerCase() !== v.toLowerCase()) {
+							changed = true;
+							break;
+						}
+					}
+
+					if (changed) {
+						// commit local changes into global palette
+						pal.vars = { ...localPalette.vars };
+						pal.edited = true;
+
+						// update CSS vars
+						Object.entries(pal.vars).forEach(([k, v]) => setCssVar(k, v));
+
+						// update dropdown option text
+						const opt = paletteSelect.querySelector(
+							`option[value="${activePaletteId}"]`
+						);
+						if (opt && !opt.textContent.includes("(bearbeitet)")) {
+							opt.textContent = `${pal.name} (bearbeitet)`;
+						}
+					} else {
+						// if nothing changed, still apply CSS (in case they reset manually), but don't mark as edited
+						Object.entries(pal.vars).forEach(([k, v]) => setCssVar(k, v));
+					}
+
+					closeOverlay();
+					initPaletteIcon();
+				});
+
+				// listener: cancel button
+				cancelBtn.addEventListener("click", closeOverlay);
+
+				// listener: ESC to close
+				overlay.addEventListener("keydown", (e) => {
+					if (e.key === "Escape") closeOverlay();
+				});
+
+				panel.tabIndex = -1;
+				panel.focus();
+			}
+
+			function getCssVar(varName) {
+				const cs = getComputedStyle(document.documentElement);
+				return cs.getPropertyValue(varName).trim();
+			}
+
+			function setCssVar(varName, value) {
+				document.documentElement.style.setProperty(varName, value);
+			}
+
+			function toHexOrDefault(color, fallback) {
+				if (!color) return fallback;
+				const hex = color.trim().toLowerCase();
+
+				// Already hex?
+				if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(hex)) {
+					if (hex.length === 4) {
+						// expand #rgb to #rrggbb
+						return (
+							"#" +
+							hex
+								.slice(1)
+								.split("")
+								.map((c) => c + c)
+								.join("")
+						);
+					}
+					return hex;
+				}
+
+				// Convert with canvas for rgb()/hsl()/named colors
+				try {
+					const c = document.createElement("canvas");
+					c.width = c.height = 1;
+					const ctx = c.getContext("2d");
+					ctx.fillStyle = "#000";
+					ctx.fillStyle = color; // browser parses the color
+					const parsed = ctx.fillStyle; // normalized form
+					// parsed is hex (#rrggbb) in most browsers
+					if (/^#([0-9a-f]{6})$/.test(parsed)) return parsed;
+				} catch {}
+				return fallback;
+			}
+
+
+			// --- Progress Bar ----------------
+			function initProgressBar(totalRounds) {
+				const bar = document.getElementById("progressBar");
+				bar.innerHTML = "";
+
+				const modulesPerRow = 10;
+				const totalRows = Math.ceil(totalRounds / modulesPerRow);
+
+				for (let row = 0; row < totalRows; row++) {
+					const rowDiv = document.createElement("div");
+					rowDiv.classList.add("progressRow");
+
+					const start = row * modulesPerRow + 1;
+					const end = Math.min(start + modulesPerRow - 1, totalRounds);
+
+					for (let i = start; i <= end; i++) {
+						// create circle
+						const circle = document.createElement("div");
+						circle.classList.add("progressCircle");
+						circle.textContent = i;
+						bar.appendChild(circle);
+						rowDiv.appendChild(circle);
+
+						// create line if not the last circle in this row
+						if (i < end) {
+							const line = document.createElement("div");
+							line.classList.add("progressLine");
+							line.dataset.after = i; // line connects from circle i → i+1
+							rowDiv.appendChild(line);
+						}
+					}
+
+					bar.appendChild(rowDiv);
+				}
+			}
+
+			function updateProgressBar(completedModules) {
+				const circles = document.querySelectorAll(".progressCircle");
+				const lines = document.querySelectorAll(".progressLine");
+
+				// circles are completed if their module is finished
+				circles.forEach((circle, index) => {
+					if (index < completedModules) {
+						circle.classList.add("completed");
+					} else {
+						circle.classList.remove("completed");
+					}
+				});
+
+				// lines are completed if the module BEFORE them is finished
+				lines.forEach((line) => {
+					const after = parseInt(line.dataset.after, 10);
+					if (after <= completedModules - 1) {
+						line.classList.add("completed");
+					} else {
+						line.classList.remove("completed");
+					}
+				});
+			}
+
+
+			// ========== Special Game Screens ==================================
+			// --- Preparation Screen ----------------
+			function preparationScreen() {
+				const gameArea = document.getElementById("gameArea");
+				const message = document.getElementById("topArea");
+
+				gameArea.innerHTML = "";
+
+				sessionStorage.removeItem("bestTime"); //remove previous highscore
+
+				initSettingsIcon();
+				initPaletteIcon();
+
+				const prepScreen = document.createElement("div");
+				prepScreen.style.display = "flex";
+				prepScreen.style.flexDirection = "column";
+				prepScreen.style.alignItems = "center";
+				prepScreen.style.justifyContent = "center";
+				prepScreen.style.height = "100%";
+
+				const startBtn = document.createElement("button");
+				startBtn.style.position = "relative";
+				startBtn.textContent = "Runde starten";
+				startBtn.style.marginTop = "20px";
+				startBtn.style.padding = "10px 20px";
+				startBtn.style.fontSize = "16px";
+				startBtn.style.borderRadius = "6px";
+				startBtn.style.cursor = "pointer";
+				startBtn.addEventListener("click", startGame);
+
+				prepScreen.appendChild(startBtn);
+				gameArea.appendChild(prepScreen);
+			}
+
+			// --- Countdown Before Round Starts ----------------
+			function countdownScreen() {
+				const gameArea = document.getElementById("gameArea");
+				const message = document.getElementById("topArea");
+
+				// clear game area + top message
+				gameArea.innerHTML = "";
+				message.textContent = "";
+
+				// create the overlay that covers the gameArea during the countdown
+				const overlay = document.createElement("div");
+				overlay.id = "gameAreaOverlay";
+
+				const counter = document.createElement("div");
+				counter.style.display = "flex";
+				counter.style.alignItems = "center";
+				counter.style.justifyContent = "center";
+				counter.style.fontSize = "96px";
+				counter.style.fontWeight = "bold";
+				counter.style.userSelect = "none";
+
+				overlay.appendChild(counter);
+				gameArea.appendChild(overlay);
+
+				let current = 3;
+
+				function tick() {
+					if (current > 0) {
+						// count down
+						counter.textContent = current;
+						current--;
+
+						// reset size/opacity
+						counter.style.transition = "none";
+						counter.style.opacity = "1";
+						counter.style.transform = "scale(1)";
+						void counter.offsetWidth; // force browser update
+
+						// now animate shrink + fade
+						counter.style.transition = "transform 1s ease, opacity 1s ease";
+						counter.style.transform = "scale(0.8)";
+						counter.style.opacity = "0.5";
+
+						setTimeout(tick, 700);
+					} else {
+						// start first game module and start timer
+						overlay.remove();
+						startTime = Date.now();
+						nextModule();
+					}
+				}
+
+				tick();
+			}
+
+			// --- Highscore Screen at Game End ----------------
+			function highscoreScreen() {
+				const gameArea = document.getElementById("gameArea");
+				const message = document.getElementById("topArea");
+
+				gameArea.innerHTML = "";
+
+				initSettingsIcon();
+				initPaletteIcon();
+
+				const totalTime = (Date.now() - startTime) / 1000; // seconds
+				let bestTime = sessionStorage.getItem("bestTime");
+
+				// show the time from the current run
+				let resultText = `<span style='font-size: 38px; font-weight: bold;'>${totalTime.toFixed(2)} Sekunden</span>`;
+
+				if (bestTime === null || totalTime < bestTime) {
+					// new highscore
+					sessionStorage.setItem("bestTime", totalTime);
+					bestTime = totalTime;
+					resultText += `\n\n🔥 Neuer Rekord! 🔥`;
+
+					// create particle effects
+					const rect = gameArea.getBoundingClientRect();
+					let count = 0;
+					let targetX = 0;
+					let targetY = 0;
+
+					function spawn() {
+						targetX =	Math.random() * (rect.width / 3) + (rect.width / 3) * count;
+						targetY = Math.random() * 100;
+						spawnParticles(targetX, targetY);
+						count++;
+						if (count < 3) {
+							setTimeout(spawn, 200);
+						}
+					}
+					spawn();
+				} else {
+					// no new record
+					resultText += `\n\n🙈 Deine Bestzeit ist immer noch ${parseFloat(
+						bestTime
+					).toFixed(2)} Sekunden. 🙈`;
+				}
+
+				message.innerHTML = "";
+
+				const resultScreen = document.createElement("div");
+				resultScreen.style.display = "flex";
+				resultScreen.style.flexDirection = "column";
+				resultScreen.style.alignItems = "center";
+				resultScreen.style.justifyContent = "center";
+				resultScreen.style.height = "100%";
+				resultScreen.style.fontSize = "22px";
+				resultScreen.style.textAlign = "center";
+				resultScreen.style.whiteSpace = "pre-line";
+
+				const resultTextDiv = document.createElement("div");
+				resultTextDiv.id = "resultText";
+				resultTextDiv.innerHTML = resultText;
+				resultScreen.appendChild(resultTextDiv);
+
+				const restartBtn = document.createElement("button");
+				restartBtn.textContent = "Neu starten";
+				restartBtn.style.marginTop = "70px";
+				restartBtn.style.padding = "10px 20px";
+				restartBtn.style.fontSize = "16px";
+				restartBtn.style.borderRadius = "6px";
+				restartBtn.style.cursor = "pointer";
+				restartBtn.addEventListener("click", startGame);
+				resultScreen.appendChild(restartBtn);
+
+				gameArea.appendChild(resultScreen);
+			}
+
+
+			// ========== Game Management Functions ==================================
+			// --- Start/Restart Game ----------------
+			function startGame() {
+				// reset round and randomness
+				currentRound = 0;
+				lastModuleIndex = -1;
+				setSeed(randomSeedForThisGame);
+
+				// initialize progress bar
+				initProgressBar(totalRounds);
+				updateProgressBar(0);
+
+				// start the countdown
+				countdownScreen();
+			}
+
+			// --- End Game ----------------
+			function finishGame() {
+				highscoreScreen();
+			}
+
+			// --- Select New Module ----------------
+			function nextModule() {
+				// clear/prevent any text selection
+				window.getSelection().removeAllRanges();
+
+				// clear headline and game area
+				document.getElementById("topArea").textContent = "";
+				document.getElementById("gameArea").innerHTML = "";
+
+				// update progress bar
+				updateProgressBar(currentRound);
+
+				//advance the game to the next round or the finish screen
+				currentRound++;
+
+				if (currentRound > totalRounds) {
+					finishGame();
+					return;
+				}
+
+				// pick random module index, avoiding repetition
+				let moduleIndex = 0;
+				if (selectedModuleScripts.length > 1) {
+					do {
+						moduleIndex = Math.floor(random() * selectedModuleScripts.length);
+					} while (moduleIndex === lastModuleIndex);
+
+					lastModuleIndex = moduleIndex;
+				}
+
+				// load the selected module
+				selectedModuleScripts[moduleIndex]();
+			}
+
+			// ========== Game Modules =========================
+			// --- Module 1: Drag and drop ----------------
+			function dragAndDropModule() {
+				document.getElementById("topArea").textContent = "Ziehe das kleine Quadrat in die Zielfläche";
+				const gameArea = document.getElementById("gameArea");
+
+				const gameWidth = gameArea.clientWidth;
+				const gameHeight = gameArea.clientHeight;
+
+				const boxSize = 50;
+				const targetSize = 100;
+
+				// place target randomly
+				const targetX = Math.floor(random() * (gameWidth - targetSize));
+				const targetY = Math.floor(random() * (gameHeight - targetSize));
+
+				// place draggable box and make sure it isn't already over the target
+				let boxX, boxY;
+				let tries = 0;
+				do {
+					boxX = Math.floor(random() * (gameWidth - boxSize));
+					boxY = Math.floor(random() * (gameHeight - boxSize));
+					tries++;
+				} while (
+					!(
+						boxX + boxSize < targetX ||
+						boxX > targetX + targetSize ||
+						boxY + boxSize < targetY ||
+						boxY > targetY + targetSize
+					) &&
+					tries < 100
+				);
+
+				let box = document.createElement("div");
+				box.style.position = "absolute";
+				box.style.left = `${boxX}px`;
+				box.style.top = `${boxY}px`;
+				box.style.width = "50px";
+				box.style.height = "50px";
+				box.style.cursor = "grab";
+				box.style.zIndex = "10";
+				box.style.background = "var(--color-accent1)";
+				box.style.border = "1px solid rgba(0, 0, 0, 0.5)";
+				box.style.borderRadius = "6px";
+
+				let target = document.createElement("div");
+				target.style.position = "absolute";
+				target.style.left = `${targetX}px`;
+				target.style.top = `${targetY}px`;
+				target.style.width = "100px";
+				target.style.height = "100px";
+				target.style.background = "rgba(150,150,150,0.4)";
+				target.style.border = "1px solid rgba(0, 0, 0, 0.3)";
+				target.style.borderRadius = "8px";
+				target.style.boxShadow = "inset 4px 4px 8px rgba(0,0,0,0.4)";
+
+				gameArea.appendChild(box);
+				gameArea.appendChild(target);
+
+				let isDragging = false;
+				let offsetX, offsetY;
+
+				// add listener to box for pickup
+				box.addEventListener("mousedown", (e) => {
+					isDragging = true;
+					box.style.cursor = "grabbing";
+					box.style.boxShadow = "6px 6px 12px rgba(0, 0, 0, 0.4)";
+					const rect = box.getBoundingClientRect();
+					offsetX = e.clientX - rect.left;
+					offsetY = e.clientY - rect.top;
+					e.preventDefault(); // prevent default browser dragging
+				});
+
+				// add document listeners for moving and dropping the box
+				function mouseMove(e) {
+					if (isDragging) {
+						const gameRect = gameArea.getBoundingClientRect();
+						let x = e.clientX - gameRect.left - offsetX;
+						let y = e.clientY - gameRect.top - offsetY;
+
+						// keep box within game area
+						x = Math.max(0, Math.min(gameWidth - boxSize, x));
+						y = Math.max(0, Math.min(gameHeight - boxSize, y));
+
+						box.style.left = `${x}px`;
+						box.style.top = `${y}px`;
+					}
+				}
+
+				function mouseUp(e) {
+					if (isDragging) {
+						isDragging = false;
+						box.style.cursor = "grab";
+						box.style.boxShadow = "none";
+						const boxRect = box.getBoundingClientRect();
+						const targetRect = target.getBoundingClientRect();
+
+						const isInside =
+							boxRect.left >= targetRect.left &&
+							boxRect.right <= targetRect.right &&
+							boxRect.top >= targetRect.top &&
+							boxRect.bottom <= targetRect.bottom;
+
+						if (isInside) {
+							document.removeEventListener("mousemove", mouseMove);
+							document.removeEventListener("mouseup", mouseUp);
+							nextModule();
+						}
+					}
+				}
+
+				document.addEventListener("mousemove", mouseMove);
+				document.addEventListener("mouseup", mouseUp);
+			}
+
+			// --- Module 2: Right click ----------------
+			function rightClickModule() {
+				document.getElementById("topArea").textContent = "Klicke mit der rechten Maustaste auf das Quadrat";
+				const gameArea = document.getElementById("gameArea");
+
+				const gameWidth = gameArea.clientWidth;
+				const gameHeight = gameArea.clientHeight;
+
+				const squareSize = 100;
+
+				// place square randomly
+				const squareX = Math.floor(random() * (gameWidth - squareSize));
+				const squareY = Math.floor(random() * (gameHeight - squareSize));
+
+				let square = document.createElement("div");
+				square.style.position = "absolute";
+				square.style.left = `${squareX}px`;
+				square.style.top = `${squareY}px`;
+				square.style.width = squareSize + "px";
+				square.style.height = squareSize + "px";
+				square.style.margin = "auto";
+				square.style.display = "flex";
+				square.style.alignItems = "center";
+				square.style.justifyContent = "center";
+				square.style.fontSize = "14px";
+				square.textContent = "Rechtsklick";
+				square.style.color = "black";
+				square.style.border = "1px solid rgba(0, 0, 0, 0.5)";
+				square.style.borderRadius = "6px";
+				square.style.background = "var(--color-accent2)";
+
+				gameArea.appendChild(square);
+
+				square.addEventListener("contextmenu", (e) => {
+					e.preventDefault();
+					nextModule();
+				});
+			}
+
+			// --- Module 3: Double click ----------------
+			function doubleClickModule() {
+				document.getElementById("topArea").textContent = "Doppelklicke auf den Kreis";
+				const gameArea = document.getElementById("gameArea");
+
+				const gameWidth = gameArea.clientWidth;
+				const gameHeight = gameArea.clientHeight;
+
+				const circleSize = 80;
+
+				// place circle randomly
+				const circleX = Math.floor(random() * (gameWidth - circleSize));
+				const circleY = Math.floor(random() * (gameHeight - circleSize));
+
+				let circle = document.createElement("div");
+				circle.style.position = "absolute";
+				circle.style.left = `${circleX}px`;
+				circle.style.top = `${circleY}px`;
+				circle.style.width = circleSize + "px";
+				circle.style.height = circleSize + "px";
+				circle.style.margin = "auto";
+				circle.style.display = "flex";
+				circle.style.alignItems = "center";
+				circle.style.justifyContent = "center";
+				circle.style.fontSize = "14px";
+				circle.textContent = "Doppelklick";
+				circle.style.color = "black";
+				circle.style.border = "1px solid rgba(0, 0, 0, 0.5)";
+				circle.style.borderRadius = "50%";
+				circle.style.background = "var(--color-accent3)";
+				circle.style.userSelect = "none";
+
+				gameArea.appendChild(circle);
+
+				circle.addEventListener("dblclick", () => {
+					nextModule();
+				});
+			}
+
+			// --- Module 4: Numpad typing ----------------
+			function numpadModule() {
+				const message = document.getElementById("topArea");
+				const gameArea = document.getElementById("gameArea");
+
+				const target = String(Math.floor(random() * 9000) + 1000); // 4-digit number
+				let typed = "";
+				let warnedNumLock = false;
+
+				message.textContent = `Tippe die Zahl auf dem Ziffernblock`;
+				gameArea.innerHTML = `<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px">
+					<div style="font-size:56px; font-weight:700; letter-spacing:6px">${target}</div>
+					<div id="typed" style="font-size:40px; height:48px; letter-spacing:6px"></div>
+					<div id="hint" style="font-size:14px; opacity:.8"></div>
+					</div>`;
+
+				const typedEl = document.getElementById("typed");
+				const hintEl = document.getElementById("hint");
+
+				const render = () => {
+					// show underscores for remaining digits
+					const out = target
+						.split("")
+						.map((_, i) => (typed[i] !== undefined ? typed[i] : "_"))
+						.join(" ");
+					typedEl.textContent = out;
+				};
+				render();
+
+				const onKeyDown = (e) => {
+					// only accept NUMPAD digits
+					const isNumpad = e.code && e.code.startsWith("Numpad") && /\d/.test(e.code);
+					const isDigit = /^\d$/.test(e.key);
+
+					// if they pressed a numpad key that isn't a digit
+					// then it is very likely they haven't activated numlock, so show the hint
+					if (isNumpad && !isDigit && !warnedNumLock) {
+						hintEl.textContent = "Der Ziffernblock ist deaktiviert. Drücke die Num-Taste und versuche es nochmal.";
+						warnedNumLock = true;
+					}
+
+					// ignore top row and non-digits
+					if (!(isNumpad && isDigit)) return;
+
+					typed += e.key;
+					render();
+
+					// if sequence diverges, reset and give quick visual feedback
+					if (!target.startsWith(typed)) {
+						typedEl.style.transition = "color .1s";
+						typedEl.style.color = "red";
+						setTimeout(() => {
+							typedEl.style.color = "";
+						}, 150);
+						typed = "";
+						render();
+						return;
+					}
+
+					// completed correctly
+					if (typed.length === target.length) {
+						document.removeEventListener("keydown", onKeyDown);
+						nextModule();
+					}
+				};
+
+				// listen on the whole document so it works even if nothing is focused
+				document.addEventListener("keydown", onKeyDown);
+			}
+
+			// --- Module 5: Keyboard combos ---
+			function keyComboModule() {
+				document.getElementById("topArea").textContent = "Drücke die Tastenkombination";
+
+				// define possible combos and choose one
+				const combos = [
+					{ key: "c", label: "Strg + C", ctrl: true },
+					{ key: "v", label: "Strg + V", ctrl: true },
+					{ key: "x", label: "Strg + X", ctrl: true },
+					{ key: "z", label: "Strg + Z", ctrl: true },
+				];
+
+				const combo = combos[Math.floor(random() * combos.length)];
+
+				// show big text inside the game area
+				gameArea.innerHTML = `<div style="position:absolute; inset:0;display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px">
+					<div style="font-size:48px;">${combo.label}</div>
+					</div>`;
+
+				function checkCombo(e) {
+					if (combo.ctrl && !e.ctrlKey) return; // must hold ctrl
+					if (e.key.toLowerCase() === combo.key) {
+						e.preventDefault(); // avoid browser's native action
+						document.removeEventListener("keydown", checkCombo);
+						nextModule();
+					}
+				}
+
+				// listen on the whole document so it works even if nothing is focused
+				document.addEventListener("keydown", checkCombo);
+			}
+
+			// --- Module 6: Context menu ----------------
+			function rightClickMenuModule() {
+				document.getElementById("topArea").textContent = "Öffne das Rechtsklick-Menü und wähle die richtige Option";
+
+				const gameArea = document.getElementById("gameArea");
+
+				// temporarily allow overflow in the gameArea
+				gameArea.style.overflow = "visible";
+
+				const gw = gameArea.clientWidth;
+				const gh = gameArea.clientHeight;
+
+				// decide which type to show (0 = simple, 1 = with submenu)
+				const useSubmenu = Math.floor(random() * 2) === 1;
+
+				// target square
+				const square = document.createElement("div");
+				square.style.position = "absolute";
+				square.style.left = `${Math.floor(random() * (gw - 120))}px`;
+				square.style.top = `${Math.floor(random() * (gh - 100))}px`;
+				square.style.width = "120px";
+				square.style.height = "100px";
+				square.style.cursor = "context-menu";
+				square.style.display = "flex";
+				square.style.alignItems = "center";
+				square.style.justifyContent = "center";
+				square.style.color = "black";
+				square.style.fontSize = "16px";
+				square.style.textAlign = "center";
+				square.style.lineHeight = "1.6em";
+				square.style.border = "1px solid rgba(0, 0, 0, 0.5)";
+				square.style.borderRadius = "6px";
+				square.style.background = "var(--color-accent4)";
+				square.style.whiteSpace = "pre-line";
+
+				gameArea.appendChild(square);
+
+				// context menu
+				const menu = document.createElement("div");
+				menu.style.position = "absolute";
+				menu.style.border = "1px solid black";
+				menu.style.background = "#fff";
+				menu.style.boxShadow = "2px 2px 6px rgba(0,0,0,0.5)";
+				menu.style.display = "none";
+				menu.style.flexDirection = "column";
+				menu.style.minWidth = "160px";
+
+				gameArea.appendChild(menu);
+
+				// submenu (only used if useSubmenu)
+				let submenu;
+				if (useSubmenu) {
+					submenu = document.createElement("div");
+					submenu.style.position = "absolute";
+					submenu.style.border = "1px solid #333";
+					submenu.style.background = "#fff";
+					submenu.style.boxShadow = "2px 2px 6px rgba(0,0,0,0.5)";
+					submenu.style.display = "none";
+					submenu.style.flexDirection = "column";
+					submenu.style.minWidth = "140px";
+
+					gameArea.appendChild(submenu);
+				}
+
+				if (!useSubmenu) {
+					// --- simple menu ---
+					const allOptions = [
+						"Öffnen",
+						"Speichern",
+						"Kopieren",
+						"Eigenschaften",
+					];
+					const correctIndex = Math.floor(random() * allOptions.length);
+					const correctOption = allOptions[correctIndex];
+					square.textContent = `Wähle\n${correctOption}`;
+
+					allOptions.forEach((opt) => {
+						const item = document.createElement("div");
+						item.textContent = opt;
+						item.style.padding = "8px 12px";
+						item.style.cursor = "pointer";
+						item.style.userSelect = "none";
+						item.style.color = "black";
+						item.addEventListener("mouseover", () => {
+							item.style.background = "#eee";
+						});
+						item.addEventListener("mouseout", () => {
+							item.style.background = "transparent";
+						});
+						item.addEventListener("click", () => {
+							menu.style.display = "none";
+							if (opt === correctOption) {
+								document.removeEventListener("click", handleClickOutside);
+								gameArea.style.overflow = "hidden";
+								nextModule();
+							} else {
+								square.style.color = "red";
+								setTimeout(() => {
+									square.style.color = "black";
+								}, 600);
+							}
+						});
+						menu.appendChild(item);
+					});
+				} else {
+					// --- menu with submenu ---
+					const mainOptions = ["Ausschneiden", "Drehen", "Mehr", "Vergrößern"];
+					const submenuOptions = ["Rot", "Grün", "Blau"];
+
+					// pick correct submenu option
+					const idx = Math.floor(random() * submenuOptions.length);
+					const correctOption = submenuOptions[idx];
+					square.textContent = `Wähle\nMehr ▸ ${correctOption}`;
+
+					function makeMenuItem(label, hasArrow = false) {
+						const item = document.createElement("div");
+						item.textContent = label;
+						item.style.padding = "8px 12px";
+						item.style.cursor = "pointer";
+						item.style.userSelect = "none";
+						item.style.color = "black";
+						item.style.display = "flex";
+						item.style.justifyContent = "space-between";
+						item.style.alignItems = "center";
+
+						if (hasArrow) {
+							const arrow = document.createElement("span");
+							arrow.textContent = "▶";
+							item.appendChild(arrow);
+
+							item.addEventListener("mouseover", () => {
+								item.style.background = "#eee";
+								const rect = item.getBoundingClientRect();
+								const parentRect = gameArea.getBoundingClientRect();
+								submenu.style.left = `${rect.right - parentRect.left - 2}px`;
+								submenu.style.top = `${rect.top - parentRect.top}px`;
+								submenu.style.display = "flex";
+							});
+							item.addEventListener("mouseout", () => {
+								item.style.background = "transparent";
+							});
+						} else {
+							item.addEventListener("mouseover", () => {
+								item.style.background = "#eee";
+								submenu.style.display = "none";
+							});
+							item.addEventListener("mouseout", () => {
+								item.style.background = "transparent";
+							});
+							item.addEventListener("click", () => {
+								menu.style.display = "none";
+								if (label === correctOption) {
+									document.removeEventListener("click", handleClickOutside);
+									gameArea.style.overflow = "hidden";
+									nextModule();
+								} else {
+									square.style.color = "red";
+									setTimeout(() => {
+										square.style.color = "black";
+									}, 600);
+								}
+							});
+						}
+						return item;
+					}
+
+					// build main menu
+					mainOptions.forEach((opt) => {
+						const item = makeMenuItem(opt, opt === "Mehr");
+						menu.appendChild(item);
+					});
+
+					// build submenu
+					submenuOptions.forEach((opt) => {
+						const subItem = document.createElement("div");
+						subItem.textContent = opt;
+						subItem.style.padding = "8px 12px";
+						subItem.style.cursor = "pointer";
+						subItem.style.userSelect = "none";
+						subItem.style.color = "black";
+						subItem.addEventListener("mouseover", () => {
+							subItem.style.background = "#eee";
+						});
+						subItem.addEventListener("mouseout", () => {
+							subItem.style.background = "transparent";
+						});
+						subItem.addEventListener("click", () => {
+							menu.style.display = "none";
+							submenu.style.display = "none";
+							if (opt === correctOption) {
+								document.removeEventListener("click", handleClickOutside);
+								gameArea.style.overflow = "hidden";
+								nextModule();
+							} else {
+								square.style.color = "red";
+								setTimeout(() => {
+									square.style.color = "black";
+								}, 600);
+							}
+						});
+						submenu.appendChild(subItem);
+					});
+				}
+
+				// show menu on right-click
+				square.addEventListener("contextmenu", (e) => {
+					e.preventDefault();
+					menu.style.left = `${
+						e.clientX - gameArea.getBoundingClientRect().left
+					}px`;
+					menu.style.top = `${
+						e.clientY - gameArea.getBoundingClientRect().top
+					}px`;
+					menu.style.display = "flex";
+					if (submenu) submenu.style.display = "none";
+				});
+
+				// add document listener for any clicks to close menu
+				function handleClickOutside(e) {
+					if (e.target !== square) {
+						menu.style.display = "none";
+						if (submenu) submenu.style.display = "none";
+					}
+				}
+
+				document.addEventListener("click", handleClickOutside);
+			}
+
+			// --- Module 7: Chase Circle ----------------
+			function chaseCircleModule() {
+				document.getElementById("topArea").textContent = "Bewege die Maus auf den Kreis";
+				const gameArea = document.getElementById("gameArea");
+				
+				const gw = gameArea.clientWidth;
+				const gh = gameArea.clientHeight;
+
+				const circleSize = 50;
+				let caught = 0;
+				const total = 5;
+
+				// create the circle element
+				const circle = document.createElement("div");
+				circle.style.position = "absolute";
+				circle.style.width = `${circleSize}px`;
+				circle.style.height = `${circleSize}px`;
+				circle.style.border = "1px solid rgba(0, 0, 0, 0.5)";
+				circle.style.borderRadius = "50%";
+				circle.style.background = "var(--color-accent2)";
+				circle.style.boxShadow = "0 4px 8px rgba(0,0,0,0.3)";
+
+				gameArea.appendChild(circle);
+
+				function placeCircle() {
+					const x = Math.floor(random() * (gw - circleSize));
+					const y = Math.floor(random() * (gh - circleSize));
+					circle.style.left = `${x}px`;
+					circle.style.top = `${y}px`;
+				}
+
+				function handleCatch() {
+					caught++;
+					if (caught >= total) {
+						circle.remove();
+						nextModule();
+					} else {
+						placeCircle();
+					}
+				}
+
+				// set first position and attach listener
+				placeCircle();
+				circle.addEventListener("mouseenter", handleCatch);
+			}
+
+			// ========== Global Event Listeners ==================================
+			document.addEventListener("contextmenu", (e) => {
+				//e.preventDefault();
+			});
+
+			
+			// ========== Start the Game ==================================
+			preparationScreen();
+
+			// --- Program Flow ---
+			// preparationScreen() > startGame() > countdownScreen() >
+			// nextModule()
+			//    at the end of every module this is called again and currentRound counts up
+			//    when currentRound reaches totalRounds then
+			// finishGame() > highscoreScreen()
+		</script>
+	</body>
+</html>

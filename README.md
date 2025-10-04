@@ -1,5 +1,9 @@
 # Maus- und Tastasturtrainer
 
+### Direkt online starten
+[https://thegitmagician.github.io/Maus_Tastatur_Trainer/maus+tastatur-trainer.html](https://thegitmagician.github.io/Maus_Tastatur_Trainer/maus+tastatur-trainer.html)
+
+
 ### Überblick
 
 Auf der Webseite kann man eine Reihe von Modulen mit Maus- und Tastatur-Übungsaufgaben durchspielen.

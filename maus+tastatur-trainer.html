@@ -308,7 +308,7 @@
 			</div>
 		</div>
 
-		<div id="footer">Der "Lohner-Trainer" v1.0</div>
+		<div id="footer">Der "Lohner-Trainer" v1.1</div>
 
 		<script>
 			// ========== Game Variables ==================================
@@ -449,7 +449,7 @@
 				},
 			};
 
-			let totalRounds = 5;
+			let totalRounds = 10;
 			let randomSeedForThisGame = Math.floor(Math.random() * 900) + 100;
 			let currentRound = 0;
 			let startTime;
@@ -1801,12 +1801,10 @@
 			function textSelectionModule() {
 				document.getElementById("topArea").textContent = "Markiere den Text vom ersten bis zum zweiten gelben Wort.";
 				const gameArea = document.getElementById("gameArea");
-				//gameArea.innerHTML = "";
 
 				// Clear previous selection
 				window.getSelection()?.removeAllRanges();
 
-				// --- German source texts ---
 				const texts = [
 					"Der schnelle braune Fuchs springt über den faulen Hund und verschwindet im Wald",
 					"Die leise wandernde Katze beobachtet den fallenden Regen und verschwindet zwischen den Schatten",
@@ -1850,12 +1848,12 @@
 				paragraph.style.fontSize = "18px";
 				paragraph.style.lineHeight = "1.6";
 				paragraph.style.maxWidth = "300px";
-				paragraph.style.margin = "0";
 				paragraph.style.textAlign = "center";
 
-				// Allow selection ONLY here
-				paragraph.style.userSelect = "text";
-				paragraph.style.cursor = "text";
+				// Allow selection ONLY in this module
+				wrapper.style.cursor = "text";
+				wrapper.style.userSelect = "text";
+				paragraph.style.userSelect = "text";				
 				// also ensure the spans inside can be selected
 				paragraph.querySelectorAll("*").forEach(el => (el.style.userSelect = "text"));
 
@@ -1878,7 +1876,7 @@
 				const targetText = words.slice(firstIndex, secondIndex + 1).join(" ").trim();
 
 				// Validate selection
-				paragraph.addEventListener("mouseup", () => {
+				wrapper.addEventListener("mouseup", () => {
 					const selection = window.getSelection().toString().trim();
 					if (selection === targetText) {
 						nextModule();

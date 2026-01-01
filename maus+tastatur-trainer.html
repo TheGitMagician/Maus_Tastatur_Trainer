@@ -1500,7 +1500,8 @@
 					if (locked) return;
 
 					const pressedKey = e.key.toLowerCase();
-					const hasModifier = e.ctrlKey || e.metaKey; // Ctrl (Win/Linux) OR Cmd (Mac)
+					let hasModifier = e.ctrlKey;
+					if (isMac) hasModifier = e.metaKey;
 
 					const isCorrect = hasModifier && pressedKey === combo.key;
 

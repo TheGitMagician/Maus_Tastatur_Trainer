@@ -320,6 +320,7 @@
 				{ script: keyComboModule, 			name: "Tastenkombinationen" },
 				{ script: rightClickMenuModule,	name: "Kontextmenü" },
 				{ script: chaseCircleModule,		name: "Fang den Kreis" },
+				{ script: textSelectionModule,		name: "Text markieren" },
 			];
 
 			const palette_vars = [
@@ -1389,14 +1390,13 @@
 
 			// --- Module 4: Numpad typing ----------------
 			function numpadModule() {
-				const message = document.getElementById("topArea");
+				document.getElementById("topArea").textContent = "Tippe die Zahl auf dem Ziffernblock";
 				const gameArea = document.getElementById("gameArea");
 
 				const target = String(Math.floor(random() * 9000) + 1000); // 4-digit number
 				let typed = "";
 				let warnedNumLock = false;
 
-				message.textContent = `Tippe die Zahl auf dem Ziffernblock`;
 				gameArea.innerHTML = `<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px">
 					<div style="font-size:56px; font-weight:700; letter-spacing:6px">${target}</div>
 					<div id="typed" style="font-size:40px; height:48px; letter-spacing:6px"></div>
@@ -1440,7 +1440,7 @@
 						typedEl.style.color = "red";
 						setTimeout(() => {
 							typedEl.style.color = "";
-						}, 150);
+						}, 200); // pause duration after wrong number
 						typed = "";
 						render();
 						return;
@@ -1460,32 +1460,67 @@
 			// --- Module 5: Keyboard combos ---
 			function keyComboModule() {
 				document.getElementById("topArea").textContent = "Drücke die Tastenkombination";
+				const gameArea = document.getElementById("gameArea");
 
-				// define possible combos and choose one
 				const combos = [
 					{ key: "c", label: "Strg + C", ctrl: true },
-					{ key: "v", label: "Strg + V", ctrl: true },
-					{ key: "x", label: "Strg + X", ctrl: true },
-					{ key: "z", label: "Strg + Z", ctrl: true },
+					{ key: "v", label: "Strg + V", ctrl: true	},
+					{	key: "x",	label: "Strg + X", ctrl: true	},
+					{	key: "z",	label: "Strg + Z", ctrl: true	},
 				];
 
 				const combo = combos[Math.floor(random() * combos.length)];
 
-				// show big text inside the game area
-				gameArea.innerHTML = `<div style="position:absolute; inset:0;display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px">
-					<div style="font-size:48px;">${combo.label}</div>
-					</div>`;
+				gameArea.innerHTML = `
+					<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px">
+						<div id="comboText" style="font-size:48px;">${combo.label}</div>
+					</div>
+				`;
+
+				const comboText = document.getElementById("comboText");
+
+				let locked = false; // pause input after an error
+				let lockTimer = null;
+
+				function flashError() {
+					locked = true;
+					comboText.style.transition = "color .1s";
+					comboText.style.color = "red";
+
+					clearTimeout(lockTimer);
+					lockTimer = setTimeout(() => {
+						comboText.style.color = "";
+						locked = false;
+					}, 400); // pause duration after wrong combo
+				}
 
 				function checkCombo(e) {
-					if (combo.ctrl && !e.ctrlKey) return; // must hold ctrl
-					if (e.key.toLowerCase() === combo.key) {
-						e.preventDefault(); // avoid browser's native action
+					if (locked) return;
+
+					// Determine if this key press should be treated as an attempt:
+					// - correct key: always an attempt
+					// - any other common letter key while CTRL is held: treat as wrong attempt
+					const pressedKey = e.key.toLowerCase();
+					const hasCtrl = e.ctrlKey;
+
+					const isCorrect = hasCtrl === !!combo.ctrl && pressedKey === combo.key && hasCtrl;
+
+					if (isCorrect) {
+						e.preventDefault();
 						document.removeEventListener("keydown", checkCombo);
+						clearTimeout(lockTimer);
 						nextModule();
+						return;
+					}
+
+					// Wrong attempt: only react when CTRL is held and a letter key is pressed
+					// (prevents punishing random keys like Shift, Alt, etc.)
+					if (hasCtrl && /^[a-z]$/.test(pressedKey)) {
+						e.preventDefault();
+						flashError();
 					}
 				}
 
-				// listen on the whole document so it works even if nothing is focused
 				document.addEventListener("keydown", checkCombo);
 			}
 
@@ -1762,13 +1797,103 @@
 				placeCircle();
 				circle.addEventListener("mouseenter", handleCatch);
 			}
+			
+			// --- Module 8: Text Selection ----------------
+			function textSelectionModule() {
+				document.getElementById("topArea").textContent = "Markiere den Text vom ersten bis zum zweiten gelben Wort.";
+				const gameArea = document.getElementById("gameArea");
+				//gameArea.innerHTML = "";
+
+				// Clear previous selection
+				window.getSelection()?.removeAllRanges();
+
+				// --- German source texts ---
+				const texts = [
+					"Der schnelle braune Fuchs springt über den faulen Hund und verschwindet im Wald",
+					"Die leise wandernde Katze beobachtet den fallenden Regen und verschwindet zwischen den Schatten",
+				];
+
+				// Pick one text using custom random()
+				const baseText = texts[Math.floor(random() * texts.length)];
+				let words = baseText.split(" ");
+
+				// Pick two distinct random indices
+				let firstIndex = Math.floor(random() * words.length);
+				let secondIndex;
+				do {
+					secondIndex = Math.floor(random() * words.length);
+				} while (secondIndex === firstIndex);
+
+				// Ensure left-to-right order
+				if (firstIndex > secondIndex) {
+					[firstIndex, secondIndex] = [secondIndex, firstIndex];
+				}
+
+				// Wrap chosen words
+				const htmlWords = words.map((word, i) => {
+					if (i === firstIndex || i === secondIndex) {
+						return `<span class="highlight">${word}</span>`;
+					}
+					return word;
+				});
+
+				// --- Centering wrapper ---
+				const wrapper = document.createElement("div");
+				wrapper.style.position = "absolute";
+				wrapper.style.inset = "0";
+				wrapper.style.display = "flex";
+				wrapper.style.alignItems = "center";
+				wrapper.style.justifyContent = "center";
+
+				// Paragraph
+				const paragraph = document.createElement("p");
+				paragraph.innerHTML = htmlWords.join(" ");
+				paragraph.style.fontSize = "18px";
+				paragraph.style.lineHeight = "1.6";
+				paragraph.style.maxWidth = "300px";
+				paragraph.style.margin = "0";
+				paragraph.style.textAlign = "center";
+
+				// Allow selection ONLY here
+				paragraph.style.userSelect = "text";
+				paragraph.style.cursor = "text";
+				// also ensure the spans inside can be selected
+				paragraph.querySelectorAll("*").forEach(el => (el.style.userSelect = "text"));
+
+				wrapper.appendChild(paragraph);
+				gameArea.appendChild(wrapper);
+
+				// Highlight style (only once)
+				if (!document.getElementById("highlight-style")) {
+					const style = document.createElement("style");
+					style.id = "highlight-style";
+					style.textContent = `
+						.highlight {
+							color: yellow;
+							text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+						}`;
+					document.head.appendChild(style);
+				}
+
+				// Target text (word-exact, deterministic)
+				const targetText = words.slice(firstIndex, secondIndex + 1).join(" ").trim();
+
+				// Validate selection
+				paragraph.addEventListener("mouseup", () => {
+					const selection = window.getSelection().toString().trim();
+					if (selection === targetText) {
+						nextModule();
+					}
+				});
+			}
+
 
 			// ========== Global Event Listeners ==================================
 			document.addEventListener("contextmenu", (e) => {
 				e.preventDefault();
 			});
-
 			
+
 			// ========== Start the Game ==================================
 			preparationScreen();
 
@@ -1778,8 +1903,6 @@
 			//    at the end of every module this is called again and currentRound counts up
 			//    when currentRound reaches totalRounds then
 			// finishGame() > highscoreScreen()
-			
-			//eine Quatschzeile
 		</script>
 	</body>
 </html>

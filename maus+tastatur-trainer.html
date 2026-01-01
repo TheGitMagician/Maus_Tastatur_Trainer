@@ -450,7 +450,7 @@
 			};
 
 			let totalRounds = 5;
-			let randomSeedForThisGame = 246;
+			let randomSeedForThisGame = Math.floor(Math.random() * 900) + 100;
 			let currentRound = 0;
 			let startTime;
 			let selectedModuleScripts = modules.map((m) => m.script);
@@ -1462,11 +1462,13 @@
 				document.getElementById("topArea").textContent = "Drücke die Tastenkombination";
 				const gameArea = document.getElementById("gameArea");
 
+				const isMac = navigator.platform.toUpperCase().includes("MAC");
+
 				const combos = [
-					{ key: "c", label: "Strg + C", ctrl: true },
-					{ key: "v", label: "Strg + V", ctrl: true	},
-					{	key: "x",	label: "Strg + X", ctrl: true	},
-					{	key: "z",	label: "Strg + Z", ctrl: true	},
+					{ key: "c", label: isMac ? "⌘ + C" : "Strg + C" },
+					{ key: "v", label: isMac ? "⌘ + V" : "Strg + V" },
+					{ key: "x", label: isMac ? "⌘ + X" : "Strg + X" },
+					{ key: "z", label: isMac ? "⌘ + Z" : "Strg + Z" },
 				];
 
 				const combo = combos[Math.floor(random() * combos.length)];
@@ -1497,13 +1499,10 @@
 				function checkCombo(e) {
 					if (locked) return;
 
-					// Determine if this key press should be treated as an attempt:
-					// - correct key: always an attempt
-					// - any other common letter key while CTRL is held: treat as wrong attempt
 					const pressedKey = e.key.toLowerCase();
-					const hasCtrl = e.ctrlKey;
+					const hasModifier = e.ctrlKey || e.metaKey; // Ctrl (Win/Linux) OR Cmd (Mac)
 
-					const isCorrect = hasCtrl === !!combo.ctrl && pressedKey === combo.key && hasCtrl;
+					const isCorrect = hasModifier && pressedKey === combo.key;
 
 					if (isCorrect) {
 						e.preventDefault();
@@ -1513,9 +1512,9 @@
 						return;
 					}
 
-					// Wrong attempt: only react when CTRL is held and a letter key is pressed
-					// (prevents punishing random keys like Shift, Alt, etc.)
-					if (hasCtrl && /^[a-z]$/.test(pressedKey)) {
+					// Wrong attempt:
+					// modifier held + letter key pressed
+					if (hasModifier && /^[a-z]$/.test(pressedKey)) {
 						e.preventDefault();
 						flashError();
 					}

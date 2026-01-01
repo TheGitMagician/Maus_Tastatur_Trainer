@@ -10,7 +10,7 @@ Auf der Webseite kann man eine Reihe von Modulen mit Maus- und Tastatur-Übungsa
 
 Am Ende sieht man die erreichte Zeit und kann versuchen, einen neuen Durchlauf mit denselben Modulen zu starten, um seine Bestzeit zu verbessern.
 
-Solange alle Schüler in den Einstellungen dieselben Werte verwenden, erhalten alle Schüler exakt dieselben Aufgaben und können gegeneinander antreten um zu schauen, wer schneller ist.
+Solange alle Schüler in den Einstellungen dieselben Werte verwenden, erhalten sie exakt dieselben Aufgaben und können gegeneinander antreten um zu schauen, wer schneller ist.
 
 ### Verfügbare Module
 
@@ -21,6 +21,7 @@ Solange alle Schüler in den Einstellungen dieselben Werte verwenden, erhalten a
 * Rechtsklick-Menü
 * Tastaturkürzel
 * Tippen auf dem Ziffernblock
+* Text markieren
 
 ### Pseudo-Zufall
 
